@@ -3,6 +3,7 @@
 
 import urllib.request
 import json
+import random
 from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
@@ -72,6 +73,18 @@ def email_closer():
     return text
 
 
+def random_name():
+    # generate a random name for filling in sender
+    word_url = "http://svnweb.freebsd.org/csrg/share/dict/words?view=co&content-type=text/plain"
+    response = urllib.request.urlopen(word_url)
+    long_txt = response.read().decode()
+    words = long_txt.splitlines()
+    upper_words = [word for word in words if word[0].isupper()]
+    name_words  = [word for word in upper_words if not word.isupper()]
+    name   = ' '.join([name_words[random.randint(0, len(name_words))] for i in range(2)])
+    return name
+
+
 def send_email():
     html_text = email_text.replace("\n", html_newline)
 
@@ -85,7 +98,7 @@ def send_email():
         smtp_server.login(creds['username'], pwd)
         smtp_server.sendmail(creds['username'], send_email_to, msg.as_string())
         smtp_server.quit()
-        print("Email successfully sent")
+        print("Email successfully sent from " + email_as_name)
     except smtplib.SMTPException:
         print("Email NOT sent")
 
@@ -121,6 +134,9 @@ repo_name = 'compact_proposal'
 base_url = 'https://api.github.com/repos/' + repo_owner + '/' + repo_name
 openprby_url = 'https://api.github.com/search/issues?q=state%3Aopen+author%3A' + pr_author + '+type%3Apr'
 openprin_repo = 'https://api.github.com/repos/' + repo_owner + '/' + repo_name + '/pulls?q=state%3Aopen'
+
+# determine who will send the email
+email_as_name = random_name()
 
 # html formatters
 html_mono = lambda text: '<tt>' +text+ '</tt>'
@@ -177,3 +193,4 @@ if n_open > 0:
 
 # report
 print('There were ' + str(n_open) + ' open pull requests identified')
+
